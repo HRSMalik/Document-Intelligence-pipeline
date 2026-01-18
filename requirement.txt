@@ -1,0 +1,7 @@
+pypdf
+scikit-learn
+sentence-transformers
+faiss-cpu
+numpy
+pandas
+tqdm
