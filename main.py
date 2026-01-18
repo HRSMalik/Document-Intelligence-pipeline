@@ -25,7 +25,6 @@ for filename, text in sorted_docs.items():
         record.update(extract_utility_bill(text))
 
     else:
-        # STRICTLY skip
         continue
 
     output[filename] = record
