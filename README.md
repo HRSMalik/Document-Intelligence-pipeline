@@ -2,6 +2,28 @@
 
 This project implements a local AI system for document understanding, classification, data extraction, and retrieval using open-source tools only. It processes PDF and text documents, classifies them into categories (Invoice, Resume, Utility Bill, Other, Unclassifiable), extracts structured data, and provides semantic search capabilities.
 
+## Quick Start
+
+### Automated Setup (Recommended)
+Run the setup script to automatically install dependencies and download the required AI model:
+```bash
+./setup.sh
+```
+
+**Note**: The setup script requires an internet connection to download Python dependencies and the AI model. Once setup is complete, the system can run entirely offline.
+
+The setup script performs the following:
+- Installs all required Python packages from `requirement.txt`
+- Downloads and caches the SentenceTransformer model locally
+- Verifies that all components are working correctly
+- Prepares the system for offline operation
+
+### Manual Setup
+If you prefer manual setup or need more control, follow the detailed instructions below.
+
+### Manual Setup
+If you prefer manual setup, follow the detailed instructions below.
+
 ## Python Environment Setup
 
 It's recommended to use a virtual environment to isolate the project's dependencies from your system Python installation. This prevents conflicts with other projects and ensures reproducible results.
@@ -51,9 +73,11 @@ It's recommended to use a virtual environment to isolate the project's dependenc
    pip install -r requirement.txt
    ```
 
-   This will install all necessary libraries including pypdf, scikit-learn, sentence-transformers, faiss-cpu, numpy, pandas, and tqdm.
+   This will install all necessary libraries including pypdf, scikit-learn, sentence-transformers, faiss-cpu, numpy, pandas, tqdm, and streamlit.
 
 ## Usage
+
+### Command Line Interface
 
 1. Place your PDF or text documents in the `data/` folder. The system supports PDF files (using pypdf for text extraction) and plain text files.
 
@@ -64,12 +88,56 @@ It's recommended to use a virtual environment to isolate the project's dependenc
 
 3. The program will:
    - Load and process all documents from the `data/` folder
-   - Classify each document based on content signals
+   - Classify each document using SVM-based classification
    - Extract structured data for classified documents
    - Build a semantic search index
    - Output results to `output.json`
 
 4. View the results in `output.json`, which contains classifications and extracted fields for each processed document.
+
+### Web Interface (Streamlit)
+
+For an interactive experience, use the Streamlit web interface:
+
+```bash
+streamlit run UI.py
+```
+
+The web interface provides:
+- **Document Processing**: One-click processing of all documents in the data folder with real-time progress feedback
+- **Interactive Semantic Search**: Natural language search through processed documents
+- **Visual Data Display**: Clean JSON display of extracted document information
+- **User-Friendly Interface**: Accessible to both technical and non-technical users
+
+#### How the UI Works
+
+The Streamlit interface (`UI.py`) operates as follows:
+
+1. **Initialization**: 
+   - Loads the SVM classifier and trains it on startup
+   - Initializes the semantic search engine
+   - Maintains session state for processed data and search index
+
+2. **Document Processing**:
+   - When "Process Documents" is clicked, it:
+     - Loads all documents from the `data/` folder
+     - Classifies each document using the trained SVM classifier
+     - Extracts structured data based on document type
+     - Builds the semantic search index
+     - Displays results in JSON format
+
+3. **Semantic Search**:
+   - Users can enter natural language queries
+   - Searches through the document embeddings using FAISS
+   - Returns relevant document snippets with similarity scores
+   - Displays results in an easy-to-read format
+
+4. **Session Management**:
+   - Processed data persists during the session
+   - Search index remains available for multiple queries
+   - No need to reprocess documents for each search
+
+The UI makes the powerful document intelligence capabilities accessible through a simple, intuitive web interface running entirely in your browser.
 
 ## Libraries and Methods Used
 
@@ -83,8 +151,8 @@ This project uses the following open-source libraries and methods, chosen for th
   - **Purpose**: Provides machine learning algorithms for document classification.
   - **Specific components used**:
     - `TfidfVectorizer`: Converts raw text into numerical TF-IDF (Term Frequency-Inverse Document Frequency) features, which capture the importance of words in the context of the entire document collection.
-    - `LinearSVC`: A linear Support Vector Machine classifier that efficiently categorizes documents based on their TF-IDF features.
-  - **Why chosen**: Scikit-learn is the go-to library for classical machine learning in Python. It's well-documented, optimized, and integrates seamlessly with numpy. For this use case, TF-IDF + SVM provides a lightweight yet effective classification approach that doesn't require large amounts of training data.
+    - `SVC`: Support Vector Machine classifier with probability estimation that efficiently categorizes documents based on their TF-IDF features.
+  - **Why chosen**: Scikit-learn is the go-to library for classical machine learning in Python. It's well-documented, optimized, and integrates seamlessly with numpy. For this use case, TF-IDF + SVM provides a lightweight yet effective classification approach that doesn't require large amounts of training data. The SVC with probability=True allows for confidence scoring of classifications.
 
 - **sentence-transformers**: 
   - **Purpose**: Generates high-quality sentence embeddings for semantic search using the "all-MiniLM-L6-v2" model, which produces 384-dimensional vectors.
@@ -106,12 +174,73 @@ This project uses the following open-source libraries and methods, chosen for th
   - **Purpose**: Provides progress bars for long-running operations (if implemented in future enhancements).
   - **Why chosen**: Tqdm is a lightweight, widely-used library for adding progress indicators to loops and operations, improving user experience during potentially time-consuming document processing.
 
+- **streamlit**: 
+  - **Purpose**: Creates the interactive web interface for document processing and search.
+  - **Why chosen**: Streamlit is a fast, easy way to create web apps for machine learning and data science projects. It allows non-technical users to interact with the document intelligence system through a simple, intuitive interface without requiring web development knowledge.
+
 ### Pipeline Components
 
 1. **Ingestion (`ingest.py`)**: Loads documents from a specified folder, extracts text from PDFs using pypdf, and cleans the text by normalizing whitespace.
 
-2. **Intent Classification (`intent.py`)**: Uses a simple but effective keyword-based approach to classify documents. It looks for specific signal words (e.g., "invoice", "total amount" for invoices) and requires a minimum number of matches to classify, avoiding false positives.
+2. **Classification (`classify.py`)**: Uses an SVM-based classifier trained on TF-IDF features to categorize documents. The SVMClassifier class provides both classification labels and confidence probabilities for better decision making.
 
 3. **Data Extraction (`extract.py`)**: Applies regular expression patterns to extract structured fields from classified documents. Each document type has custom regex patterns designed to capture relevant information like dates, amounts, and contact details.
 
 4. **Retrieval (`retreiver.py`)**: Implements semantic search by encoding documents into embeddings using SentenceTransformers, then using FAISS for efficient similarity search. This allows users to find documents by meaning rather than exact keywords.
+
+5. **Model Loader (`model_loader.py`)**: Manages the loading and caching of the SentenceTransformer model to ensure efficient memory usage and fast startup times.
+
+6. **Web Interface (`UI.py`)**: Provides a Streamlit-based web application for interactive document processing and semantic search, making the system accessible to users who prefer graphical interfaces.
+
+7. **Setup Script (`setup.sh`)**: Automated installation script that handles dependency installation and model downloading for easy deployment and offline operation.
+
+### Setup Script (`setup.sh`)
+The automated setup script handles:
+- Installation of Python dependencies
+- Downloading and caching the SentenceTransformer model locally
+- Verification of all components
+- Optimized for first-time setup and deployment
+
+## Output Format
+
+The system generates `output.json` with the following structure:
+
+```json
+{
+  "filename.pdf": {
+    "class": "DocumentType",
+    "field1": "value1",
+    "field2": "value2",
+    ...
+  }
+}
+```
+
+## Search Capabilities
+
+The semantic search supports natural language queries such as:
+- "Find all documents mentioning payments due in January"
+- "Show me resume information"
+- "Invoices from specific companies"
+- "Contact information from resumes"
+
+## Technical Requirements
+
+- **Python**: 3.8 or higher
+- **Memory**: At least 4GB RAM (8GB recommended for large document sets)
+- **Storage**: ~500MB for models and dependencies
+- **Operating System**: Windows, macOS, or Linux
+- **Network**: Internet connection required for initial setup only
+- **Runtime**: Completely offline after setup
+
+## Offline Capabilities
+
+**Setup Phase**: Requires internet connection to download dependencies and AI models.
+
+**Runtime Phase**: Runs completely offline after initial setup:
+- All document processing happens locally
+- Semantic search uses pre-downloaded models
+- No external API calls or cloud services
+- Data remains on your machine
+
+The setup script ensures all required models are downloaded and cached locally, enabling full offline operation for document processing and search.
