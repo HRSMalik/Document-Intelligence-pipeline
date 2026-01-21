@@ -6,7 +6,7 @@ from retreiver import SemanticSearch
 
 st.set_page_config(page_title="Document Intelligence Demo", layout="wide")
 st.title("Document Intelligence Demo")
-st.write("Minimal UI to demonstrate document extraction and semantic search.")
+st.write("document extraction and semantic search.")
 
 if "output" not in st.session_state:
     st.session_state.output = {}
